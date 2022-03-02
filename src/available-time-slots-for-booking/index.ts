@@ -2,7 +2,7 @@ import { getPhotographers, getPhotographer, Photographer } from '../model/photog
 import { getBookingsByPhotographer } from '../model/bookings'
 import { getAvailabilities } from '../model/availabilities'
 
-import { UnixTimespan, toUnixTime, toISOStrings } from './date-formatting'
+import { UnixTimespan, ISOTimespan, toUnixTime, toISOStrings } from './date-formatting'
 
 // Order matters
 const chronologicallyByStartTime = (a: UnixTimespan, b: UnixTimespan) => a.starts - b.starts
@@ -71,18 +71,6 @@ const timeSlotReducer = (availabilities: UnixTimespan[], booking: UnixTimespan):
 }
 
 /**
- * Get a list of open time slots in a single availability
- * that are long enough to accomodate the wanted duration.
- */
- const getAvailabilityOpenings = ({
-	availability,
-	bookings,
-}: {
-	availability: UnixTimespan
-	bookings: UnixTimespan[]
-}): UnixTimespan[] => bookings.reduce(timeSlotReducer, [availability])
-
-/**
  * Find the first available time slot for a given photographer.
  */
 const getPhotographerTimeSlot = ({
@@ -102,9 +90,9 @@ const getPhotographerTimeSlot = ({
 	const openingHasEnoughTimeForTheBooking = (opening: UnixTimespan): boolean =>
 		opening.ends - opening.starts >= durationInMinutes * minute
 
-	/** Binds the current photographer's bookings to getAvailabilityOpenings */
+	/** Get a list of open time slots in a single availability */
 	const availabilityToOpenings = (availability: UnixTimespan): UnixTimespan[] =>
-		getAvailabilityOpenings({ availability, bookings })
+		bookings.reduce(timeSlotReducer, [availability])
 
 	/** After a suitable starting time has been found, sets the ending time */
 	const constructABooking = (timeSlot: UnixTimespan): UnixTimespan => ({
@@ -126,8 +114,8 @@ const getPhotographerTimeSlot = ({
 }
 
 export type AvailableTimeSlotsForBooking = {
-	photographer: { id: string; name: string }
-	timeSlot: { starts: string; ends: string }
+	photographer: Photographer
+	timeSlot: ISOTimespan
 }[]
 
 const availableTimeSlotsForBooking = (durationInMinutes: number): AvailableTimeSlotsForBooking =>
